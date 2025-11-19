@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Flex, Box, Text, Input, Link, Button } from "@chakra-ui/react"
 
-function Auth() {
+const Auth = () => {
 
   const [email, setEmail] = useState("")
   const [isEmailCorrect, setCorrectEmail] = useState(true)
@@ -29,7 +29,7 @@ function Auth() {
   return (
     <Flex
       h = "100vh"
-      w = "100wh"
+      w = "100vw"
       justify = "center"
       align = "center"
       bg = "rgb(240, 240, 240)"
@@ -112,8 +112,6 @@ function Auth() {
             <Link
               fontSize = {12}
               color = "rgb(4, 120, 87)"
-              justify = "flex-end"
-              align = "end"
               p = {2}
               ml = "auto"
             >

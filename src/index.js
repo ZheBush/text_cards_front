@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import Auth from './Auth';
-import Register from './register/Register';
+import Home from './Home'
+import Cards from './Cards';
+import Register from './Register';
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -12,8 +14,10 @@ root.render(
     <ChakraProvider value = {defaultSystem}>
       <BrowserRouter>
         <Routes>
-          <Route path = '/' element = {<Auth/>}/>
-          <Route path = '/register' element = {<Register/>}/>
+          <Route path = '/' element = {<Cards/>}/>
+          {/* <Route path = '/' element = {<Home/>}/> */}
+          {/* <Route path = '/' element = {<Auth/>}/>
+          <Route path = '/register' element = {<Register/>}/> */}
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

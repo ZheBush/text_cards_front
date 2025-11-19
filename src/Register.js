@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Flex, Box, Text, Input, Button } from "@chakra-ui/react"
 
-function Register() {
+const Register = () => {
 
   const [email, setEmail] = useState("")
   const [isEmailCorrect, setCorrectEmail] = useState(true)
@@ -50,7 +50,7 @@ function Register() {
       bg = "rgb(240, 240, 240)"
     >
       <Flex 
-        h = "55%"
+        h = "50%"
         w = "30%"
         p = {4}
         flexDirection = "column"
@@ -149,7 +149,7 @@ function Register() {
             align = "start"
             p = {2}
           >
-            Password
+            Confirm password
           </Text>
 
           <Input
