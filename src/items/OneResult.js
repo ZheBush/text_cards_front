@@ -9,7 +9,7 @@ const OneResult = (props) => {
         <Flex
             minH = "3vh"
             w = "100%"
-            justify = "top"
+            justify = "start"
             align = "center"
             bg = {isSelected && isCorrect? "rgb(4, 120, 87)": 
                 isSelected && !isCorrect? "rgb(232, 52, 52)": "rgb(240, 240, 240)"}

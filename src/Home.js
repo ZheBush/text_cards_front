@@ -4,7 +4,9 @@ import Keyboard from "./icons/Keyboard";
 import FileTxt from "./icons/FileTxt"
 import FilePdf from "./icons/FilePdf"
 
-const Home = () => {
+const Home = (props) => {
+
+    const {user} = props
 
     const [title, setTitle] = useState("")
     const [text, setText] = useState("")
@@ -16,7 +18,7 @@ const Home = () => {
       setTitle(e.target.value)
     }
     const changeText = (e) => {
-        setText(e.tar.value)
+        setText(e.target.value)
     }
 
     const handleTxtFileClick = () => {
@@ -60,8 +62,9 @@ const Home = () => {
                     fontSize = {16}
                     color = "rgb(4, 120, 87)"
                     p = {2}
+                    href = "/login"
                 >
-                    Change account
+                    { user === null ? "Log in" : "Log out" }
                 </Link>
                 <Link
                     fontSize = {16}

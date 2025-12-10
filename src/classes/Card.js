@@ -8,27 +8,7 @@ export class Card {
         this.selectedAnswer = selectedAnswer;
         this.options = options;
     }
-
-    getAnswerList() {
-        return this.options;
-    }
-
-    getAnswerCount() {
-        return this.options.length;
-    }
-
-    getCorrectAnswer() {
-        return this.correctAnswer;
-    }
-
-    isCorrectAnswer(answer) {
-        return answer === this.correctAnswer;
-    }
-
-    chooseAnswer(answer) {
-        this.selectedAnswer = answer
-    }
-
+    
 }
 
 export default Card

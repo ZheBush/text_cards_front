@@ -1,10 +1,9 @@
 import { Flex, Button, Text, Link, VStack } from "@chakra-ui/react"
-import OneCard from "./items/OneCard"
-import Card from "./classes/Card"
-import CardList from "./classes/CardList"
-import title from "./Home"
+import Card from "../classes/Card"
+import CardList from "../classes/CardList"
+import OneCard from "../items/OneCard"
 
-const Cards = () => {
+const Results = (props) => {
 
     const card1 = new Card(1, 1, "abc?", "a", "a", ["a", "b", "c"])
     const card2 = new Card(2, 1, "def?", "e", "e", ["d", "e", "f"])
@@ -16,6 +15,8 @@ const Cards = () => {
             minH = "100vh"
             w = "100%"
             bg = "rgb(240, 240, 240)"
+            justify = "center"
+            align = "center" 
             flexDirection = "column"
         >
             <Flex
@@ -46,7 +47,8 @@ const Cards = () => {
                 </Flex>
             </Flex>
             <Flex
-                minH = "90vh"
+                flex = "1"
+                minH = "0"
                 w = "100%"
                 flexDirection = "column"
                 justify = "center"
@@ -57,34 +59,53 @@ const Cards = () => {
                     w = "40%"
                     justify = "center"
                     align = "center" 
-                    marginTop = "12"
+                    marginTop = {6}
                     flexDirection = "column"
                 >
                     <Text
                         fontSize = {24}
                         color = "rgb(40, 40, 40)"
-
+                        justify = "center"
+                        align = "center" 
                     >
-                        Title
+                        Results
                     </Text>
                 </Flex>
                 <VStack
-                    minH = "100%"
+                    flex = "1"
+                    minH = "0"
                     w = "100%"
                     overflowY = "auto"
                     spaceY = {4}
-                    marginTop = {8}
+                    marginTop = {6}
+                    paddingBottom = {4}
                 >
                     {
-                        cardList.getAllCards.map(card => (
-                            <OneCard isQuestion = {true} card = {card}/>
+                        cardList.cardList.map(card => (
+                            <OneCard card = {card}/>
                         ))
                     }
                 </VStack>
-            
+                <Button
+                    h = "5vh"
+                    w = "7vw"
+                    bg = "rgb(4, 120, 87)"
+                    borderRadius = "lg"
+                    shadow = "0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
+                    marginTop = {4}
+                    marginBottom = {8}
+                >
+                    <Text 
+                        textAlign = "center"
+                        color = "rgb(240, 240, 240)"
+                        fontWeight = {400}
+                    >
+                        To home
+                    </Text>
+                </Button>
             </Flex>
         </Flex>
     )
 }
 
-export default Cards
+export default Results

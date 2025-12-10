@@ -2,7 +2,7 @@ import { Text, Button, Flex, Checkbox, VStack, Box } from "@chakra-ui/react"
 import OneAns from "./OneAns"
 import OneResult from "../items/OneResult"
 
-const OneCard = (props) => {
+const OneCardList = (props) => {
 
     const {card, isQuestion} = props
 

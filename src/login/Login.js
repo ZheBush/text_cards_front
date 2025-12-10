@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Flex, Box, Text, Input, Link, Button } from "@chakra-ui/react"
 
-const Auth = () => {
+const Login = () => {
 
   const [email, setEmail] = useState("")
   const [isEmailCorrect, setCorrectEmail] = useState(true)
@@ -175,4 +175,4 @@ const Auth = () => {
   );
 }
 
-export default Auth;
+export default Login;
