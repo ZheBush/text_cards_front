@@ -1,10 +1,9 @@
 import { Flex, Button, Text, Link, VStack } from "@chakra-ui/react"
-import OneCard from "./items/OneCard"
 import Card from "./classes/Card"
 import CardList from "./classes/CardList"
-import title from "./Home"
+import OneCard from "./items/OneCard"
 
-const Cards = () => {
+const Results = (props) => {
 
     const card1 = new Card(1, 1, "abc?", "a", "a", ["a", "b", "c"])
     const card2 = new Card(2, 1, "def?", "e", "e", ["d", "e", "f"])
@@ -63,9 +62,10 @@ const Cards = () => {
                     <Text
                         fontSize = {24}
                         color = "rgb(40, 40, 40)"
-
+                        justify = "top"
+                        align = "top" 
                     >
-                        Title
+                        Results
                     </Text>
                 </Flex>
                 <VStack
@@ -76,15 +76,15 @@ const Cards = () => {
                     marginTop = {8}
                 >
                     {
-                        cardList.getAllCards.map(card => (
-                            <OneCard isQuestion = {true} card = {card}/>
+                        cardList.cardList.map(card => (
+                            <OneCard card = {card}/>
                         ))
                     }
                 </VStack>
-            
+                
             </Flex>
         </Flex>
     )
 }
 
-export default Cards
+export default Results
