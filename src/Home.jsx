@@ -71,6 +71,7 @@ const Home = (props) => {
                     color = "rgb(4, 120, 87)"
                     p = {2}   
                     ml = "auto"
+                    href = "/history"
                 >
                     To history
                 </Link>

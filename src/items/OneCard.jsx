@@ -1,6 +1,6 @@
 import { Text, Button, Flex, Checkbox, VStack, Box } from "@chakra-ui/react"
 import OneAns from "./OneAns"
-import OneResult from "../items/OneResult"
+import OneResult from "./OneResult"
 
 const OneCard = (props) => {
 

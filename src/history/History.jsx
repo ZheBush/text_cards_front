@@ -1,8 +1,7 @@
-import { Flex, Button, Text, Link, VStack } from "@chakra-ui/react"
+import { Flex, Button, Text, Link, Grid, GridItem } from "@chakra-ui/react"
 import Card from "../classes/Card"
 import CardList from "../classes/CardList"
-import OneCard from "../items/OneCard"
-import UserHistory from "../classes/UserHistory"
+import OneHistoryCard from "../items/OneHistoryCard"
 
 const History = (props) => {
 
@@ -16,7 +15,7 @@ const History = (props) => {
     const card23 = new Card(3, 1, "xyz?", "z", "x", ["x", "y", "z"])
     const cardList2 = new CardList("my cards 2", [card21, card22, card23])
 
-    const history = new UserHistory(1, [cardList1, cardList2])
+    const history = [cardList1]
 
     return (
         <Flex
@@ -79,21 +78,31 @@ const History = (props) => {
                         Results
                     </Text>
                 </Flex>
-                <VStack
+                <Grid
                     flex = "1"
-                    minH = "0"
+                    h = "100%"
                     w = "100%"
-                    overflowY = "auto"
-                    spaceY = {4}
-                    marginTop = {6}
+                    templateColumns = "repeat(4, 0.2fr)"
+                    justify = "center"
+                    gap = {4}
+                    justifyContent = "center"
+                    alignItems = "flex-start"
+                    paddingTop = {16}
                     paddingBottom = {4}
+                    overflowY = "auto"
                 >
-                    {/* {
-                        cardList.cardList.map(card => (
-                            <OneCard card = {card}/>
+                    {
+                        history.map(cardList => (
+                            <GridItem>
+                                <OneHistoryCard
+                                    title = {cardList.title}
+                                    score = {cardList.score}
+                                    total = {history.length}
+                                />
+                            </GridItem>
                         ))
-                    } */}
-                </VStack>
+                    }
+                </Grid>
                 <Button
                     h = "5vh"
                     w = "7vw"
