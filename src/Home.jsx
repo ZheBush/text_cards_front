@@ -9,13 +9,17 @@ const Home = (props) => {
     const {user} = props
 
     const [title, setTitle] = useState("")
+    const [cardsNum, setCardsNum] = useState("")
     const [text, setText] = useState("")
 
     const txtFile = useRef(null)
     const pdfFile = useRef(null)
     
     const changeTitle = (e) => {
-      setTitle(e.target.value)
+        setTitle(e.target.value)
+    }
+    const changeCardsNum = (e) => {
+        setCardsNum(e.target.value)
     }
     const changeText = (e) => {
         setText(e.target.value)
@@ -99,19 +103,36 @@ const Home = (props) => {
                     color = "rgb(40, 40, 40)"
 
                 >
-                    Enter the title of the cards
+                    Enter the title and number of the cards
                 </Text>
-                <Input
-                    value = {title}
-                    onChange = {changeTitle}
-                    size = "sm"
-                    placeholder = "Title"
-                    borderColor = "rgb(220, 220, 220)"
-                    shadow = {4}
-                    marginTop = "6"
-                    _focus = {{
-                      bg: "rgb(240, 240, 240)",
-                      borderColor: "rgb(200, 200, 200)"}}/>
+                <Flex
+                    w = "30vw"
+                    flexDirection = "column"
+                >
+                    <Input
+                        value = {title}
+                        onChange = {changeTitle}
+                        size = "sm"
+                        placeholder = "Title"
+                        borderColor = "rgb(220, 220, 220)"
+                        shadow = {4}
+                        marginTop = "6"
+                        _focus = {{
+                          bg: "rgb(240, 240, 240)",
+                          borderColor: "rgb(200, 200, 200)"}}/>
+                    <Input
+                        value = {cardsNum}
+                        onChange = {changeCardsNum}
+                        size = "sm"
+                        placeholder = "Num"
+                        borderColor = "rgb(220, 220, 220)"
+                        shadow = {4}
+                        marginTop = "6"
+                        _focus = {{
+                          bg: "rgb(240, 240, 240)",
+                          borderColor: "rgb(200, 200, 200)"}}/>                          
+                </Flex>
+
             </Flex>
             <Flex
                 h = "100%"
