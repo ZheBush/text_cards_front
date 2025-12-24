@@ -1,12 +1,11 @@
 export class Card {
 
-    constructor(id, cardListId, question, correctAnswer, selectedAnswer, options = []) {
+    constructor(id, question, answer, cardListId, userId) {
         this.id = id;
-        this.cardListId = cardListId;
         this.question = question;
-        this.correctAnswer = correctAnswer;
-        this.selectedAnswer = selectedAnswer;
-        this.options = options;
+        this.answer = answer;
+        this.userId = userId
+        this.cardListId = cardListId;
     }
     
 }

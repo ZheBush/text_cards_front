@@ -1,10 +1,9 @@
 export class CardList {
 
-    constructor(title, userId, score, cardList = []) {
+    constructor(id, title, userId) {
+        this.id = id
         this.title = title
         this.userId = userId
-        this.score = score
-        this.cardList = cardList
     }
 
 }
