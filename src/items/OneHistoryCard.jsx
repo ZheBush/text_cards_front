@@ -2,7 +2,7 @@ import { Flex, Button, Text } from "@chakra-ui/react"
 
 const OneHistoryCard = (props) => {
 
-    const {title, score, total} = props
+    const {k, title} = props
 
     return(
         <Button
@@ -20,15 +20,9 @@ const OneHistoryCard = (props) => {
                 textAlign = "center"
                 color = "rgb(40, 40, 40)"
                 fontWeight = {400}
+                fontSize={18}
             >
                 {title}
-            </Text>
-            <Text 
-                textAlign = "center"
-                color = "rgb(40, 40, 40)"
-                fontWeight = {300}
-            >
-                {score} / {total}
             </Text>
         </Button>
     )

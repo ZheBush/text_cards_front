@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Flex, Box, Text, Input, Button } from "@chakra-ui/react"
+import { useAuth } from "../AuthContext";
+import { useNavigate } from "react-router-dom";
+
 
 const Register = () => {
 
@@ -9,36 +12,79 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isPasswordConfirmed, setPasswordConfirmed] = useState(true) 
 
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const register = async (email, password) => {
+    try {
+      const response = await fetch('/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Registration failed');
+      }
+
+      const data = await response.json();
+      console.log('Registration successful:', data);
+
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('token_type', data.token_type);
+        
+        login({
+          email,
+          token: data.access_token,
+          tokenType: data.token_type
+        });
+        
+        navigate("/home");
+      } else {
+        navigate("/login");
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  };
+
   const changeEmail = (e) => {
     setEmail(e.target.value)
   }
+
   const changePassword = (e) => {
     setPassword(e.target.value)
   }
+
   const changeConfirmPassword = (e) => {
     setConfirmPassword(e.target.value)
   }
 
-  const submitData = (e) => {
+  const submitData = async (e) => {
 
-    e.preventDefault()
+    e.preventDefault();
+
+    setCorrectEmail(true);
+    setPasswordConfirmed(true);
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (emailRegex.test(email)) {
-      setCorrectEmail(true)
-    }
-    else {
-      setCorrectEmail(false)
-
+    
+    if (!emailRegex.test(email)) {
+      setCorrectEmail(false);
+      return;
     }
 
-    if (password === confirmPassword) {
-        setPasswordConfirmed(true)
-    }
-    else {
-        setPasswordConfirmed(false)
-    }
-
+    await register(email, password)
   }
 
   return (
@@ -98,6 +144,11 @@ const Register = () => {
             size = "sm"
             borderColor = {isEmailCorrect? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}
             shadow = {4}
+            _autofill={{
+              bg: "white", 
+              borderColor: "rgb(220, 220, 220)",
+              boxShadow: "0 0 0px 1000px white inset", 
+            }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
               borderColor: isEmailCorrect? "rgb(200, 200, 200)": "rgb(232, 52, 52)"}}/>
@@ -129,6 +180,11 @@ const Register = () => {
             size = "sm"
             borderColor = {isPasswordConfirmed? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}
             shadow={4}
+            _autofill={{
+              bg: "white", 
+              borderColor: "rgb(220, 220, 220)",
+              boxShadow: "0 0 0px 1000px white inset", 
+            }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
               borderColor: isPasswordConfirmed? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}}/>
@@ -160,6 +216,11 @@ const Register = () => {
             size = "sm"
             borderColor = {isPasswordConfirmed? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}
             shadow={4}
+            _autofill={{
+              bg: "white", 
+              borderColor: "rgb(220, 220, 220)",
+              boxShadow: "0 0 0px 1000px white inset", 
+            }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
               borderColor: isPasswordConfirmed? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}}/>
@@ -170,9 +231,7 @@ const Register = () => {
           bg = "rgb(4, 120, 87)"
           _hover = {{ bg: "rgb(24, 140, 107)" }}
           marginTop = {8}
-          onClick = {
-            submitData
-          }
+          onClick = {submitData}
         >
           Create account
         </Button>
@@ -182,4 +241,4 @@ const Register = () => {
   );
 }
 
-export default Register;
+export default Register

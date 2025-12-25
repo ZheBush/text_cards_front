@@ -1,21 +1,63 @@
 import { Flex, Button, Text, Link, Grid, GridItem } from "@chakra-ui/react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom";
 import Card from "../classes/Card"
 import CardList from "../classes/CardList"
 import OneHistoryCard from "../items/OneHistoryCard"
 
-const History = (props) => {
+const History = () => {
 
-    const card11 = new Card(1, 1, "abc?", "a", "a", ["a", "b", "c"])
-    const card12 = new Card(2, 1, "def?", "e", "e", ["d", "e", "f"])
-    const card13 = new Card(3, 1, "xyz?", "z", "x", ["x", "y", "z"])
-    const cardList1 = new CardList("my cards 1", [card11, card12, card13])
+    const [history, setHistory] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [isLogged, setIsLogged] = useState(false)
 
-    const card21 = new Card(1, 1, "abc?", "a", "a", ["a", "b", "c"])
-    const card22 = new Card(2, 1, "def?", "e", "e", ["d", "e", "f"])
-    const card23 = new Card(3, 1, "xyz?", "z", "x", ["x", "y", "z"])
-    const cardList2 = new CardList("my cards 2", [card21, card22, card23])
+    const navigate = useNavigate();
 
-    const history = [cardList1]
+    useEffect(() => {
+        const token = localStorage.getItem('access_token')
+        setIsLogged(!!token)
+        console.log(token)
+        fetchHistory()
+    }, [])
+
+    const fetchHistory = async () => {
+        setIsLoading(true)
+        try {
+            const token = localStorage.getItem('access_token')
+            
+            if (!token) {
+                navigate("/login")
+                return
+            }
+
+            const response = await fetch('/card_lists/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch cards')
+            }
+
+            const historyData = await response.json()
+            
+            setHistory(
+                historyData.map(cardList => 
+                    new CardList(cardList.id, cardList.title, cardList.cards)
+                )
+            )
+
+            console.log(history.length)
+        } 
+        catch (error) {
+            console.error("Error fetching cards:", error)
+        } 
+        finally {
+            setIsLoading(false)
+        }
+    }
 
     return (
         <Flex
@@ -40,16 +82,18 @@ const History = (props) => {
                         fontSize = {16}
                         color = "rgb(4, 120, 87)"
                         p = {2}
+                        href = "login"
                     >
-                        Change account
+                        {isLogged ? "Log out" : "Log in"}
                     </Link>
                     <Link
                         fontSize = {16}
                         color = "rgb(4, 120, 87)"
                         p = {2}   
                         ml = "auto"
+                        href = "/home"
                     >
-                        To history
+                        To home
                     </Link>
                 </Flex>
             </Flex>
@@ -75,7 +119,7 @@ const History = (props) => {
                         justify = "center"
                         align = "center" 
                     >
-                        Results
+                        History
                     </Text>
                 </Flex>
                 <Grid
@@ -103,23 +147,6 @@ const History = (props) => {
                         ))
                     }
                 </Grid>
-                <Button
-                    h = "5vh"
-                    w = "7vw"
-                    bg = "rgb(4, 120, 87)"
-                    borderRadius = "lg"
-                    shadow = "0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
-                    marginTop = {4}
-                    marginBottom = {8}
-                >
-                    <Text 
-                        textAlign = "center"
-                        color = "rgb(240, 240, 240)"
-                        fontWeight = {400}
-                    >
-                        To home
-                    </Text>
-                </Button>
             </Flex>
         </Flex>
     )
