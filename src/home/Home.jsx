@@ -349,7 +349,7 @@ const Home = () => {
                         justify = "center"
                         align = "center" 
                         spaceX = {8}
-                        marginTop = {14}
+                        marginTop = {10}
                     >
                         <Flex
                             h = "42vh"

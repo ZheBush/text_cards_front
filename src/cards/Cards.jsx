@@ -21,7 +21,7 @@ const Cards = () => {
         }
     }, [cardListId, cardListTitle])
 
-    const fetchCards = async (title) => {
+    const fetchCards = async (id, title) => {
         setIsLoading(true)
         try {
             const token = localStorage.getItem('access_token')
@@ -31,7 +31,7 @@ const Cards = () => {
                 return
             }
 
-            const response = await fetch('/cards/card_list/${id}', {
+            const response = await fetch(`/cards/card_list/${id}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -130,7 +130,7 @@ const Cards = () => {
                         fontSize={24}
                         color="rgb(40, 40, 40)"
                     >
-                        {isLoading ? "Loading..." : cardList?.title || "Cards"}
+                        {isLoading ? "Loading..." : cardListTitle}
                     </Text>
                 </Flex>
                 

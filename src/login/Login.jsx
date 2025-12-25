@@ -116,7 +116,7 @@ const Login = () => {
             _autofill={{
               bg: "white", 
               borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px white inset", 
+              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset", 
             }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
@@ -161,7 +161,7 @@ const Login = () => {
             _autofill={{
               bg: "white", 
               borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px white inset", 
+              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset", 
             }}
             _focus = {{
               bg: "rgb(240, 240, 240)",

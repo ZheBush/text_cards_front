@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Flex, Box, Text, Input, Button } from "@chakra-ui/react"
+import { use, useState } from "react";
+import { Flex, Box, Text, Input, Button, Link } from "@chakra-ui/react"
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -11,11 +11,16 @@ const Register = () => {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isPasswordConfirmed, setPasswordConfirmed] = useState(true) 
+  const [isUserExists, setIsUserExists] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const register = async (email, password) => {
+    setIsLoading(true);
+    setIsUserExists(false); 
+    
     try {
       const response = await fetch('/auth/register', {
         method: 'POST',
@@ -28,15 +33,51 @@ const Register = () => {
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Registration failed');
+      const status = response.status;
+
+      let responseText = "";
+      let errorData = null;
+      
+      try {
+        responseText = await response.text();
+        if (responseText) {
+          errorData = JSON.parse(responseText);
+        }
+      } catch (parseError) {
+        console.log("Cannot parse response as JSON:", parseError);
       }
 
-      const data = await response.json();
-      console.log('Registration successful:', data);
+      if (status === 400) {
+        if (errorData && errorData.detail && errorData.detail.includes("User already exists")) {
+          setIsUserExists(true);
+          setIsLoading(false);
+          return null; 
+        } else if (errorData && errorData.detail) {
+          throw new Error(errorData.detail);
+        } else {
+          throw new Error('Registration failed');
+        }
+      }
 
-      if (data.access_token) {
+      if (!response.ok) {
+        if (errorData && errorData.detail) {
+          throw new Error(errorData.detail);
+        } else {
+          throw new Error(`Registration failed with status: ${status}`);
+        }
+      }
+
+      let data = null;
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          throw new Error("Invalid response from server");
+        }
+      }
+
+      if (data && data.access_token) {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('token_type', data.token_type);
         
@@ -55,27 +96,33 @@ const Register = () => {
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const changeEmail = (e) => {
-    setEmail(e.target.value)
+    setEmail(e.target.value);
+    setIsUserExists(false);
+    setCorrectEmail(true);
   }
 
   const changePassword = (e) => {
-    setPassword(e.target.value)
+    setPassword(e.target.value);
+    setPasswordConfirmed(true);
   }
 
   const changeConfirmPassword = (e) => {
-    setConfirmPassword(e.target.value)
+    setConfirmPassword(e.target.value);
+    setPasswordConfirmed(true);
   }
 
   const submitData = async (e) => {
-
     e.preventDefault();
 
     setCorrectEmail(true);
     setPasswordConfirmed(true);
+    setIsUserExists(false); 
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
@@ -84,7 +131,12 @@ const Register = () => {
       return;
     }
 
-    await register(email, password)
+    if (password !== confirmPassword) {
+      setPasswordConfirmed(false);
+      return;
+    }
+
+    await register(email, password);
   }
 
   return (
@@ -147,7 +199,7 @@ const Register = () => {
             _autofill={{
               bg: "white", 
               borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px white inset", 
+              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset", 
             }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
@@ -181,9 +233,9 @@ const Register = () => {
             borderColor = {isPasswordConfirmed? "rgb(220, 220, 220)": "rgb(232, 52, 52)"}
             shadow={4}
             _autofill={{
-              bg: "white", 
+              bg: "rgb(220, 220, 220)", 
               borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px white inset", 
+              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset", 
             }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
@@ -219,7 +271,7 @@ const Register = () => {
             _autofill={{
               bg: "white", 
               borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px white inset", 
+              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset", 
             }}
             _focus = {{
               bg: "rgb(240, 240, 240)",
@@ -235,7 +287,28 @@ const Register = () => {
         >
           Create account
         </Button>
-
+        <Flex
+          w = "100%"
+          flexDirection = "row"
+          justify = "center"
+          align = "center"
+          marginTop = {4}
+        >
+          <Text
+            color = {isUserExists? "rgb(232, 52, 52)": "rgb(100, 100, 100)"}
+            fontSize = {12}
+          >
+            {isUserExists ? "User alreay exists": "Do you already have an account?"}
+          </Text>
+          <Link
+            color = "rgb(4, 120, 87)"
+            fontSize = {12}
+            marginStart = {1}
+            href = "/login"
+          >
+            Log in
+          </Link>
+        </Flex>
       </Flex>
     </Flex>
   );

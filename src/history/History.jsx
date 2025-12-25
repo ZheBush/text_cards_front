@@ -131,18 +131,15 @@ const History = () => {
                     gap = {4}
                     justifyContent = "center"
                     alignItems = "flex-start"
-                    paddingTop = {16}
-                    paddingBottom = {4}
+                    paddingTop = "10"
                     overflowY = "auto"
                 >
                     {
                         history.map(cardList => (
-                            <GridItem>
+                            <GridItem key = {cardList.id}>
                                 <OneHistoryCard
-                                    title = {cardList.title}
-                                    score = {cardList.score}
-                                    total = {history.length}
-                                />
+                                    id = {cardList.id}
+                                    title = {cardList.title} />
                             </GridItem>
                         ))
                     }

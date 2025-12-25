@@ -1,8 +1,13 @@
 import { Text, Button, Flex, Checkbox, VStack, Box } from "@chakra-ui/react"
+import { useState } from "react"
 
 const OneCard = (props) => {
+    const { k, q, a } = props
+    const [showAnswer, setShowAnswer] = useState(false)
 
-    const {k, q, a} = props
+    const toggleAnswer = () => {
+        setShowAnswer(!showAnswer)
+    }
 
     return(
         <Flex
@@ -19,6 +24,9 @@ const OneCard = (props) => {
             borderRadius = {16}
             marginTop = {1}
             marginBottom = {1}
+            cursor="pointer"
+            onClick={toggleAnswer}
+            _hover={{ shadow: "0 6px 25px -4px rgba(0, 0, 0, 0.15)" }}
         >
             <Flex
                 minH = "30vh"
@@ -38,22 +46,42 @@ const OneCard = (props) => {
                 >
                     {q}
                 </Text>
-                <Text
-                    color = "rgb(40, 40, 40)"
-                    fontSize = {18}
+                
+                <Box
                     marginTop = {4}
                     justify = "center"
                     align = "center"    
                     textAlign = "center"
                     paddingX = "10"
+                    paddingTop = "5"
+                    minH="40px"
+                    w="100%"
                 >
-                    {a}
-                </Text>
+                    {showAnswer ? (
+                        <Text
+                            color = "rgb(4, 120, 87)"
+                            fontSize = {18}
+                            fontWeight = "400"
+                            transition="all 0.3s"
+                        >
+                            {a}
+                        </Text>
+                    ) : (
+                        <Text
+                            color = "rgb(160, 160, 160)"
+                            fontSize = {18}
+                            fontStyle = "italic"
+                            cursor="pointer"
+                            _hover={{ color: "rgb(120, 120, 120)" }}
+                            transition="all 0.3s"
+                        >
+                            Нажмите, чтобы показать ответ
+                        </Text>
+                    )}
+                </Box>
             </Flex>
-                  
         </Flex>
     )
-
 }
 
 export default OneCard
