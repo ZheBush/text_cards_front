@@ -1,16 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import Login from './login/Login';
-import Home from './home/Home';
-import Cards from './cards/Cards';
-import Register from './register/Register';
-import History from './history/History';
+import Login from './login/Login.tsx';
+import Home from './home/Home.tsx';
+import Cards from './cards/Cards.tsx';
+import Register from './register/Register.tsx';
+import History from './history/History.tsx';
+import Groups from './groups/Groups.tsx';
+import GroupCards from './groups/GroupCards.tsx';
 import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from '../src/AuthContext';
+import { AuthProvider } from './AuthContext.tsx';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
 
 root.render(
   <React.StrictMode>
@@ -24,6 +28,8 @@ root.render(
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/history" element={<History />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/group-cards" element={<GroupCards />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

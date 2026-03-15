@@ -1,0 +1,190 @@
+import React, { useState, useEffect } from "react";
+import { Flex, Button, Text, Link, VStack } from "@chakra-ui/react";
+import { useNavigate, useLocation } from "react-router-dom";
+import OneCard from "../items/OneCard.tsx";
+import Card from "../classes/Card.ts";
+import CardList from "../classes/CardList.ts";
+import { LocationState } from "../types";
+
+interface CardData {
+  id: string;
+  question: string;
+  answer: string;
+  card_list_id: string;
+  user_id: string;
+}
+
+const Cards: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [cardList, setCardList] = useState<CardList | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const state = location.state as LocationState;
+  const cardListId = state?.cardListId;
+  const cardListTitle = state?.title;
+
+  useEffect(() => {
+    if (cardListId) {
+      fetchCards(cardListId, cardListTitle || "");
+    }
+  }, [cardListId, cardListTitle]);
+
+  const fetchCards = async (id: string, title: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(`/cards/card_list/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch cards');
+      }
+
+      const cardsData: CardData[] = await response.json();
+
+      const cards = cardsData.map(card =>
+        new Card(card.id, card.question, card.answer, card.card_list_id, card.user_id)
+      );
+
+      console.log(cards.length);
+
+      const list = new CardList(id, title, cards);
+      setCardList(list);
+    } catch (error) {
+      console.error("Error fetching cards:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToHistory = (): void => {
+    navigate("/history");
+  };
+
+  const handleChangeAccount = (): void => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('token_type');
+    navigate("/login");
+  };
+
+  return (
+    <Flex
+      minH="100vh"
+      w="100%"
+      bg="rgb(240, 240, 240)"
+      flexDirection="column"
+    >
+      <Flex
+        h="6vh"
+        w="100%"
+        justify="center"
+        align="center"
+      >
+        <Flex
+          h="100%"
+          w="60%"
+        >
+          <Link
+            fontSize={16}
+            color="rgb(4, 120, 87)"
+            p={2}
+            onClick={handleChangeAccount}
+            cursor="pointer"
+            _hover={{ textDecoration: "underline" }}
+          >
+            Change account
+          </Link>
+          <Link
+            fontSize={16}
+            color="rgb(4, 120, 87)"
+            p={2}
+            ml="auto"
+            onClick={handleBackToHistory}
+            cursor="pointer"
+            _hover={{ textDecoration: "underline" }}
+          >
+            To history
+          </Link>
+        </Flex>
+      </Flex>
+      <Flex
+        h="100%"
+        w="100%"
+        flexDirection="column"
+        justify="center"
+        align="center"
+      >
+        <Flex
+          h="5%"
+          w="40%"
+          justify="top"
+          align="center"
+          marginTop="6"
+          flexDirection="column"
+        >
+          <Text
+            fontSize={24}
+            color="rgb(40, 40, 40)"
+          >
+            {isLoading ? "Loading..." : cardListTitle}
+          </Text>
+        </Flex>
+
+        {isLoading ? (
+          <Text>Loading cards...</Text>
+        ) : cardList ? (
+          <VStack
+            minH="100%"
+            w="100%"
+            overflowY="auto"
+            gap={4}
+            marginTop={8}
+            paddingX={4}
+          >
+            {cardList.cards.map(card => (
+              <OneCard
+                key = {card.id}
+                q = {card.question}
+                a = {card.answer}
+              ></OneCard>
+            ))}
+          </VStack>
+        ) : (
+          <Text>No cards found</Text>
+        )}
+
+        <Button
+          h="5vh"
+          w="7vw"
+          bg="rgb(4, 120, 87)"
+          borderRadius="lg"
+          shadow="0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
+          marginTop={4}
+          marginBottom={8}
+          onClick={() => navigate("/home")}
+        >
+          <Text
+            textAlign="center"
+            color="rgb(240, 240, 240)"
+            fontWeight={400}
+          >
+            To home
+          </Text>
+        </Button>
+      </Flex>
+    </Flex>
+  );
+};
+
+export default Cards;
