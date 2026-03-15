@@ -46,7 +46,7 @@ const Groups: React.FC = () => {
           <Input 
             placeholder="New group name" 
             value={newGroupName} 
-            onChange={(e) => setNewGroupName(e.target.value)} 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGroupName(e.target.value)}
           />
           <Button onClick={createGroup} bg="rgb(4,120,87)" color="white">Create</Button>
         </HStack>
