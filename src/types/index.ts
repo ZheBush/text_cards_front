@@ -43,9 +43,12 @@ export interface LocationState {
   title?: string;
 }
 
-export interface UploadResponse {
-  card_list_id: string;
-  title: string;
+export interface Group {
+  id: string;
+  name: string;
+  created_at: string;
+  created_by: string;
+  members_count: number;
 }
 
 export interface CardData {

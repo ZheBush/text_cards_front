@@ -242,45 +242,6 @@ const Home: React.FC = () => {
       flexDirection="column"
     >
       <Flex
-        h="6vh"
-        w="100%"
-        justify="center"
-        align="center"
-      >
-        <Flex
-          h="100%"
-          w="60%"
-        >
-          <Link
-            fontSize={16}
-            color="rgb(4, 120, 87)"
-            p={2}
-            onClick={handleAuthClick}
-            cursor="pointer"
-            _hover={{ textDecoration: "underline" }}
-          >
-            {isLogged ? "Log out" : "Log in"}
-          </Link>
-          <Link
-            fontSize={16}
-            color="rgb(4, 120, 87)"
-            p={2}
-            ml="auto"
-            href="/history"
-          >
-            To history
-          </Link>
-          <Link
-            fontSize={16}
-            color="rgb(4, 120, 87)"
-            p={2}
-            href="/groups"
-          >
-            Groups
-          </Link>
-        </Flex>
-      </Flex>
-      <Flex
         h="100%"
         w="100%"
         bg="rgb(240, 240, 240)"
