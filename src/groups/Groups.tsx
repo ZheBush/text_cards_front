@@ -15,6 +15,8 @@ interface CardList {
   cards_count: number;
 }
 
+const API_BASE = '';
+
 const Groups: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -31,47 +33,113 @@ const Groups: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<'text' | 'txt' | 'pdf'>('text');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchGroups();
   }, []);
 
+  const refreshAccessToken = async (): Promise<string | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('token_type', data.token_type);
+        return data.access_token;
+      } else {
+        navigate('/login');
+        return null;
+      }
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      navigate('/login');
+      return null;
+    }
+  };
+
+  const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  
+  const token = localStorage.getItem('access_token');
+  
+  const headers = new Headers(options.headers);
+  
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  
+  // НЕ устанавливаем Content-Type для FormData
+  const isFormData = options.body instanceof FormData;
+  if (!isFormData && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  let response = await fetch(fullUrl, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    const newToken = await refreshAccessToken();
+    
+    if (newToken) {
+      headers.set('Authorization', `Bearer ${newToken}`);
+      
+      response = await fetch(fullUrl, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+    }
+  }
+
+  return response;
+};
+
   const fetchGroups = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('/groups/my', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authenticatedFetch('/groups/my');
       const data = await response.json();
       setGroups(data);
     } catch (error) {
       console.error('Error fetching groups:', error);
+      setError('Failed to fetch groups');
     }
   };
 
   const createGroup = async () => {
     if (!newGroupName.trim()) return;
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('/groups/', {
+      const response = await authenticatedFetch('/groups/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name: newGroupName })
       });
+      
       if (response.ok) {
         setNewGroupName('');
         fetchGroups();
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to create group');
       }
     } catch (error) {
       console.error('Error creating group:', error);
+      setError('Failed to create group');
     }
   };
 
   const openManageModal = async (group: Group) => {
     setSelectedGroup(group);
+    setError(null);
     await Promise.all([
       fetchGroupUsers(group.id),
       fetchGroupCardLists(group.id)
@@ -81,27 +149,23 @@ const Groups: React.FC = () => {
 
   const fetchGroupUsers = async (groupId: string) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/groups/${groupId}/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authenticatedFetch(`/groups/${groupId}/users`);
       const data = await response.json();
       setGroupUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching group users:', error);
+      setError('Failed to fetch group users');
     }
   };
 
   const fetchGroupCardLists = async (groupId: string) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/groups/${groupId}/card_lists`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authenticatedFetch(`/groups/${groupId}/card_lists`);
       const data = await response.json();
       setGroupCardLists(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching card lists:', error);
+      setError('Failed to fetch card lists');
     }
   };
 
@@ -110,44 +174,57 @@ const Groups: React.FC = () => {
     setSelectedGroup(null);
     setGroupUsers([]);
     setGroupCardLists([]);
+    setError(null);
+    setNewUserId('');
+    setNewCardListTitle('');
+    setNewCardListText('');
+    setSelectedFile(null);
+    setFileType('text');
+    setCardsNum(5);
   };
 
   const addUserToGroup = async () => {
     if (!newUserId.trim() || !selectedGroup) return;
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/groups/${selectedGroup.id}/add_user`, {
+      const response = await authenticatedFetch(`/groups/${selectedGroup.id}/add_user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ user_id: newUserId, role_in_group: 'member' })
       });
+      
       if (response.ok) {
         setNewUserId('');
         await fetchGroupUsers(selectedGroup.id);
-        await fetchGroups(); 
+        await fetchGroups();
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to add user');
       }
     } catch (error) {
       console.error('Error adding user:', error);
+      setError('Failed to add user');
     }
   };
 
   const removeUserFromGroup = async (userId: string) => {
     if (!selectedGroup) return;
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/groups/${selectedGroup.id}/remove_user/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await authenticatedFetch(`/groups/${selectedGroup.id}/remove_user/${userId}`, {
+        method: 'DELETE'
       });
+      
       if (response.ok) {
         await fetchGroupUsers(selectedGroup.id);
         await fetchGroups();
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to remove user');
       }
     } catch (error) {
       console.error('Error removing user:', error);
+      setError('Failed to remove user');
     }
   };
 
@@ -157,8 +234,9 @@ const Groups: React.FC = () => {
     if ((fileType === 'txt' || fileType === 'pdf') && !selectedFile) return;
 
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const token = localStorage.getItem('access_token');
       const formData = new FormData();
       formData.append('title', newCardListTitle);
       formData.append('cards_num', cardsNum.toString());
@@ -175,9 +253,8 @@ const Groups: React.FC = () => {
         formData.append('file', selectedFile!);
       }
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
@@ -187,45 +264,120 @@ const Groups: React.FC = () => {
         setSelectedFile(null);
         setCardsNum(5);
         await fetchGroupCardLists(selectedGroup.id);
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to add card list');
       }
     } catch (error) {
       console.error('Error adding card list:', error);
+      setError('Failed to add card list');
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (!user || user.role !== 'manager') {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: 'rgb(240, 240, 240)'
+      }}>
+        <h2 style={{ color: '#dc3545' }}>Access Denied</h2>
+        <p>Only managers can access this page.</p>
+        <button 
+          onClick={() => navigate('/home')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgb(4,120,87)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginTop: '16px'
+          }}
+        >
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', padding: '32px' }}>
-      <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>My Groups</h1>
+    <div style={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      padding: '32px', 
+      backgroundColor: 'rgb(240, 240, 240)'
+    }}>
       
-      {user?.role === 'manager' && (
-        <div style={{ display: 'flex', marginBottom: '24px', gap: '8px' }}>
-          <input
-            placeholder="New group name"
-            value={newGroupName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewGroupName(e.target.value)}
-            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', flex: 1 }}
-          />
-          <button 
-            onClick={createGroup} 
-            style={{ 
-              backgroundColor: 'rgb(4,120,87)', 
-              color: 'white', 
-              padding: '8px 16px', 
-              border: 'none', 
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Create
-          </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', margin: 0 }}>My Groups</h1>
+        <button 
+          onClick={() => navigate('/home')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgb(4,120,87)',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Back to Home
+        </button>
+      </div>
+      
+      {error && (
+        <div style={{ 
+          backgroundColor: '#f8d7da', 
+          color: '#721c24', 
+          padding: '12px', 
+          borderRadius: '4px', 
+          marginBottom: '16px' 
+        }}>
+          {error}
         </div>
       )}
+
+      <div style={{ display: 'flex', marginBottom: '24px', gap: '8px' }}>
+        <input
+          placeholder="New group name"
+          value={newGroupName}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewGroupName(e.target.value)}
+          style={{ 
+            padding: '8px', 
+            border: '1px solid #ccc', 
+            borderRadius: '4px', 
+            flex: 1 
+          }}
+        />
+        <button 
+          onClick={createGroup} 
+          style={{ 
+            backgroundColor: 'rgb(4,120,87)', 
+            color: 'white', 
+            padding: '8px 16px', 
+            border: 'none', 
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Create
+        </button>
+      </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {groups.map(group => (
-          <div key={group.id} style={{ padding: '16px', border: '1px solid #ccc', borderRadius: '8px' }}>
+          <div key={group.id} style={{ 
+            padding: '16px', 
+            border: '1px solid #ccc', 
+            borderRadius: '8px',
+            backgroundColor: 'white'
+          }}>
             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>{group.name}</p>
             <p style={{ margin: '0 0 8px 0' }}>Members: {group.members_count || 0}</p>
             <button 
@@ -354,7 +506,8 @@ const Groups: React.FC = () => {
                         padding: '8px', 
                         borderBottom: '1px solid #eee', 
                         cursor: 'pointer',
-                        ':hover': { backgroundColor: '#f5f5f5' }
+                        color: 'rgb(4,120,87)',
+                        textDecoration: 'underline'
                       }}
                     >
                       {cl.title} ({cl.cards_count} cards)
@@ -378,6 +531,7 @@ const Groups: React.FC = () => {
                     <option value="txt">TXT File</option>
                     <option value="pdf">PDF File</option>
                   </select>
+                  
                   {fileType === 'text' && (
                     <textarea
                       placeholder="Text for cards"
@@ -386,6 +540,7 @@ const Groups: React.FC = () => {
                       style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', minHeight: '80px' }}
                     />
                   )}
+                  
                   {(fileType === 'txt' || fileType === 'pdf') && (
                     <input
                       type="file"
@@ -394,6 +549,7 @@ const Groups: React.FC = () => {
                       style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                     />
                   )}
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>Cards number:</span>
                     <input
@@ -424,11 +580,6 @@ const Groups: React.FC = () => {
                       {isLoading ? 'Generating...' : 'Add Card List'}
                     </button>
                   </div>
-                  {isLoading && (
-                    <div style={{ color: 'blue', fontStyle: 'italic' }}>
-                      Generating cards, please wait...
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

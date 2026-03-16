@@ -102,7 +102,6 @@ const Home: React.FC = () => {
         localStorage.setItem('token_type', data.token_type);
         return data.access_token;
       } else {
-        // Если refresh не удался, выходим
         await logout();
         navigate("/login");
         return null;
@@ -130,12 +129,10 @@ const Home: React.FC = () => {
       credentials: 'include',
     });
 
-    // Если получили 401, пробуем обновить токен
     if (response.status === 401) {
       const newToken = await refreshAccessToken();
       
       if (newToken) {
-        // Повторяем запрос с новым токеном
         const newHeaders = {
           ...options.headers,
           'Authorization': `Bearer ${newToken}`,
@@ -156,7 +153,6 @@ const Home: React.FC = () => {
     setIsTxtLoading(true);
     try {
       if (isGuest) {
-        // Гостевой режим
         const formData = new FormData();
         formData.append("text", text);
         formData.append("cards_num", parseInt(cardsNum).toString());
@@ -304,9 +300,7 @@ const Home: React.FC = () => {
         w="100%"
         justifyContent="center"
         alignItems="center"
-        bg="white"
-        borderBottom="1px solid"
-        borderColor="rgb(220, 220, 220)"
+        bg="rgb(240, 240, 240)"
       >
         <Flex h="100%" w="60%" alignItems="center">
           <Link
@@ -403,7 +397,6 @@ const Home: React.FC = () => {
 
         <Flex w="100%" justifyContent="center" alignItems="center">
           <HStack gap={8} justifyContent="center" alignItems="stretch" flexWrap="wrap">
-            {/* Блок с текстом */}
             <Flex
               w="300px"
               bg="white"
@@ -420,9 +413,14 @@ const Home: React.FC = () => {
               <Textarea
                 h="150px"
                 w="100%"
+                py = "65px"
                 value={text}
                 onChange={changeText}
                 placeholder="Enter your text here..."
+                textAlign="center"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
                 resize="none"
                 borderColor="rgb(220,220,220)"
                 _focus={{ borderColor: "rgb(4,120,87)" }}
@@ -441,7 +439,6 @@ const Home: React.FC = () => {
               </Button>
             </Flex>
 
-            {/* Блок с TXT файлом */}
             <Flex
               w="300px"
               bg="white"
@@ -464,16 +461,16 @@ const Home: React.FC = () => {
               </Text>
               <Button
                 w="100%"
-                h="100px"
+                h="150px"
                 onClick={handleTxtFileClick}
                 variant="outline"
-                borderColor="rgb(4,120,87)"
+                borderColor="rgb(220, 220, 220)"
                 color="rgb(4,120,87)"
                 _hover={{ bg: "rgb(240,240,240)" }}
                 mb={2}
                 disabled={!user}
               >
-                <Text textAlign="center" fontSize={14}>
+                <Text textAlign="center" fontSize={14} fontWeight="400" color="rgb(150, 150, 150)">
                   {selectedTxtFile ? selectedTxtFile.name : "Choose TXT file"}
                 </Text>
               </Button>
@@ -491,7 +488,6 @@ const Home: React.FC = () => {
               </Button>
             </Flex>
 
-            {/* Блок с PDF файлом */}
             <Flex
               w="300px"
               bg="white"
@@ -514,16 +510,16 @@ const Home: React.FC = () => {
               </Text>
               <Button
                 w="100%"
-                h="100px"
+                h="150px"
                 onClick={handlePdfFileClick}
                 variant="outline"
-                borderColor="rgb(4,120,87)"
+                borderColor="rgb(220, 220, 220)"
                 color="rgb(4,120,87)"
                 _hover={{ bg: "rgb(240,240,240)" }}
                 mb={2}
                 disabled={!user}
               >
-                <Text textAlign="center" fontSize={14}>
+                <Text textAlign="center" fontSize={14} fontWeight="400" color="rgb(150, 150, 150)">
                   {selectedPdfFile ? selectedPdfFile.name : "Choose PDF file"}
                 </Text>
               </Button>
