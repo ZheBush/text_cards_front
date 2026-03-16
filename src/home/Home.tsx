@@ -7,36 +7,32 @@ import Keyboard from "../icons/Keyboard.tsx";
 import FileTxt from "../icons/FileTxt.tsx";
 import FilePdf from "../icons/FilePdf.tsx";
 import { LocationState } from "../types";
+import { useAuth } from "../AuthContext.tsx";
 
 interface UploadResponse {
   card_list_id: string;
   title: string;
 }
 
+const API_BASE = '';
+
 const Home: React.FC = () => {
   const [title, setTitle] = useState<string>("");
   const [cardsNum, setCardsNum] = useState<string>("");
   const [text, setText] = useState<string>("");
-  const [isLogged, setIsLogged] = useState<boolean>(false);
   const [selectedTxtFile, setSelectedTxtFile] = useState<File | null>(null);
   const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [isTxtLoading, setIsTxtLoading] = useState<boolean>(false);
   const [isPdfLoading, setIsPdfLoading] = useState<boolean>(false);
 
   const navigate = useNavigate();
+  const { user, isGuest, logout } = useAuth();
   const txtFileRef = useRef<HTMLInputElement>(null);
   const pdfFileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    setIsLogged(!!token);
-  }, []);
-
-  const handleAuthClick = (): void => {
-    if (isLogged) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('token_type');
-      setIsLogged(false);
+  const handleAuthClick = async (): Promise<void> => {
+    if (user) {
+      await logout();
     }
     navigate("/login");
   };
@@ -54,7 +50,7 @@ const Home: React.FC = () => {
   };
 
   const handleTxtFileClick = (): void => {
-    if (!isLogged) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -62,7 +58,7 @@ const Home: React.FC = () => {
   };
 
   const handlePdfFileClick = (): void => {
-    if (!isLogged) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -73,11 +69,8 @@ const Home: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       console.log(file.name);
-      if (!isLogged) {
+      if (!user) {
         navigate("/login");
-        return;
-      }
-      if (!title || !cardsNum) {
         return;
       }
       setSelectedTxtFile(file);
@@ -88,53 +81,130 @@ const Home: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       console.log(file.name);
-      if (!isLogged) {
+      if (!user) {
         navigate("/login");
-        return;
-      }
-      if (!title || !cardsNum) {
         return;
       }
       setSelectedPdfFile(file);
     }
   };
 
-  const uploadText = async (): Promise<void> => {
-    if (!text) return;
+  const refreshAccessToken = async (): Promise<string | null> => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('token_type', data.token_type);
+        return data.access_token;
+      } else {
+        // Если refresh не удался, выходим
+        await logout();
+        navigate("/login");
+        return null;
+      }
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      await logout();
+      navigate("/login");
+      return null;
+    }
+  };
+
+  const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
     
+    let token = localStorage.getItem('access_token');
+    const headers = {
+      ...options.headers,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+
+    let response = await fetch(fullUrl, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+
+    // Если получили 401, пробуем обновить токен
+    if (response.status === 401) {
+      const newToken = await refreshAccessToken();
+      
+      if (newToken) {
+        // Повторяем запрос с новым токеном
+        const newHeaders = {
+          ...options.headers,
+          'Authorization': `Bearer ${newToken}`,
+        };
+        response = await fetch(fullUrl, {
+          ...options,
+          headers: newHeaders,
+          credentials: 'include',
+        });
+      }
+    }
+
+    return response;
+  };
+
+  const uploadText = async (): Promise<void> => {
+
     setIsTxtLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      if (isGuest) {
+        // Гостевой режим
+        const formData = new FormData();
+        formData.append("text", text);
+        formData.append("cards_num", parseInt(cardsNum).toString());
 
-      if (!token) {
-        throw new Error("No authentication token found");
+        const response = await fetch('/card_lists/guest/upload_text', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate cards');
+        }
+
+        const data = await response.json();
+        
+        navigate("/cards", {
+          state: {
+            cards: data.cards,
+            title: title
+          } as LocationState
+        });
+      } else {
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("cards_num", parseInt(cardsNum).toString());
+        
+        const textBlob = new Blob([text], { type: 'text/plain' });
+        const textFile = new File([textBlob], 'text.txt', { type: 'text/plain' });
+        formData.append("file", textFile);
+
+        const response = await authenticatedFetch('/card_lists/upload_txt', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload text');
+        }
+
+        const data: UploadResponse = await response.json();
+
+        navigate("/cards", {
+          state: {
+            cardListId: data.card_list_id,
+            title: data.title
+          } as LocationState
+        });
       }
-
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("cards_num", parseInt(cardsNum).toString());
-      
-      const textBlob = new Blob([text], { type: 'text/plain' });
-      const textFile = new File([textBlob], 'text.txt', { type: 'text/plain' });
-      formData.append("file", textFile);
-
-      const response = await fetch('/card_lists/upload_txt', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData
-      });
-
-      const data: UploadResponse = await response.json();
-
-      console.log(data);
-      navigate("/cards", {
-        state: {
-          cardListId: data.card_list_id,
-          title: data.title
-        } as LocationState
-      });
 
       setTitle("");
       setCardsNum("");
@@ -151,28 +221,22 @@ const Home: React.FC = () => {
     
     setIsTxtLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
       const formData = new FormData();
       formData.append("title", title);
       formData.append("cards_num", parseInt(cardsNum).toString());
       formData.append("file", file);
 
-      const response = await fetch('/card_lists/upload_txt', {
+      const response = await authenticatedFetch('/card_lists/upload_txt', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
         body: formData
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
       const data: UploadResponse = await response.json();
 
-      console.log(data);
       navigate("/cards", {
         state: {
           cardListId: data.card_list_id,
@@ -195,28 +259,22 @@ const Home: React.FC = () => {
     
     setIsPdfLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
       const formData = new FormData();
       formData.append("title", title);
       formData.append("cards_num", parseInt(cardsNum).toString());
       formData.append("file", file);
 
-      const response = await fetch('/card_lists/upload_pdf', {
+      const response = await authenticatedFetch('/card_lists/upload_pdf', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
         body: formData
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
       const data: UploadResponse = await response.json();
 
-      console.log(data);
       navigate("/cards", {
         state: {
           cardListId: data.card_list_id,
@@ -242,133 +300,156 @@ const Home: React.FC = () => {
       flexDirection="column"
     >
       <Flex
-        h="100%"
+        h="6vh"
+        w="100%"
+        justifyContent="center"
+        alignItems="center"
+        bg="white"
+        borderBottom="1px solid"
+        borderColor="rgb(220, 220, 220)"
+      >
+        <Flex h="100%" w="60%" alignItems="center">
+          <Link
+            fontSize={16}
+            color="rgb(4, 120, 87)"
+            p={2}
+            onClick={handleAuthClick}
+            cursor="pointer"
+            _hover={{ textDecoration: "underline" }}
+          >
+            {user ? (isGuest ? "Guest" : "Log out") : "Log in / Register"}
+          </Link>
+          
+          <Flex ml="auto" gap={4}>
+            {user && !isGuest && (
+              <Link
+                fontSize={16}
+                color="rgb(4, 120, 87)"
+                p={2}
+                href="/history"
+                _hover={{ textDecoration: "underline" }}
+              >
+                To history
+              </Link>
+            )}
+            {user && !isGuest && user.role === 'manager' && (
+              <Link
+                fontSize={16}
+                color="rgb(4, 120, 87)"
+                p={2}
+                href="/groups"
+                _hover={{ textDecoration: "underline" }}
+              >
+                Manage Groups
+              </Link>
+            )}
+          </Flex>
+        </Flex>
+      </Flex>
+
+      <Flex
+        flex="1"
         w="100%"
         bg="rgb(240, 240, 240)"
         flexDirection="column"
-        justify="center"
-        align="center"
+        justifyContent="center"
+        alignItems="center"
+        py={8}
       >
         <Flex
-          h="20%"
           w="40%"
-          bg="rgb(240, 240, 240)"
-          justify="center"
-          align="center"
-          marginTop="12"
+          bg="white"
+          p={8}
+          borderRadius="lg"
+          shadow="md"
+          justifyContent="center"
+          alignItems="center"
           flexDirection="column"
+          mb={8}
         >
-          <Text
-            fontSize={24}
-            color="rgb(40, 40, 40)"
-          >
-            Enter the title and number of the cards
+          <Text fontSize={24} color="rgb(40, 40, 40)" mb={6} fontWeight="500">
+            Create New Cards
           </Text>
-          <Flex
-            w="30vw"
-            flexDirection="column"
-          >
+          
+          <Flex w="100%" flexDirection="column">
             <Input
               value={title}
               onChange={changeTitle}
-              size="sm"
+              size="md"
               placeholder="Title"
               borderColor="rgb(220, 220, 220)"
-              shadow="4"
-              marginTop="6"
+              mb={4}
               _focus={{
-                bg: "rgb(240, 240, 240)",
-                borderColor: "rgb(200, 200, 200)"
+                bg: "white",
+                borderColor: "rgb(4, 120, 87)"
               }}
             />
             <Input
               value={cardsNum}
               onChange={changeCardsNum}
-              size="sm"
-              placeholder="Num"
+              size="md"
+              placeholder="Number of cards"
+              type="number"
+              min="1"
+              max="20"
               borderColor="rgb(220, 220, 220)"
-              shadow="4"
-              marginTop="6"
               _focus={{
-                bg: "rgb(240, 240, 240)",
-                borderColor: "rgb(200, 200, 200)"
+                bg: "white",
+                borderColor: "rgb(4, 120, 87)"
               }}
             />
           </Flex>
         </Flex>
-        <Flex
-          h="100%"
-          w="100%"
-          bg="rgb(240, 240, 240)"
-          justify="center"
-          align="center"
-          flexDirection="column"
-          marginTop="10"
-        >
-          <Text
-            fontSize={24}
-            color="rgb(40, 40, 40)"
-          >
-            Choose the download option
-          </Text>
-          <Text
-            fontSize={14}
-            color="rgb(100, 100, 100)"
-            marginTop="2"
-          >
-            Enter the text or load file (.txt or .pdf) to get the cards
-          </Text>
-          <HStack
-            h="100%"
-            w="100%"
-            bg="rgb(240, 240, 240)"
-            justify="center"
-            align="center"
-            spaceX={8}
-            marginTop={10}
-          >
+
+        <Flex w="100%" justifyContent="center" alignItems="center">
+          <HStack gap={8} justifyContent="center" alignItems="stretch" flexWrap="wrap">
+            {/* Блок с текстом */}
             <Flex
-              h="42vh"
-              w="16vw"
-              bg="rgb(240, 240, 240)"
-              shadow="0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
-              borderRadius={16}
-              align="center"
+              w="300px"
+              bg="white"
+              shadow="md"
+              borderRadius="lg"
+              alignItems="center"
               flexDirection="column"
-              paddingTop="4"
+              p={6}
             >
               <Keyboard />
+              <Text fontSize={18} fontWeight="500" color="rgb(40,40,40)" mt={4} mb={2}>
+                From Text
+              </Text>
               <Textarea
-                h="55%"
-                w="80%"
+                h="150px"
+                w="100%"
                 value={text}
                 onChange={changeText}
-                marginTop="4"
-                placeholder="Enter your text here"
-                alignContent="center"
-                textAlign="center"
-                whiteSpace="pre-wrap"
+                placeholder="Enter your text here..."
+                resize="none"
+                borderColor="rgb(220,220,220)"
+                _focus={{ borderColor: "rgb(4,120,87)" }}
               />
               <Button
-                h="12%"
-                w="80%"
+                w="100%"
                 bg="rgb(4, 120, 87)"
-                marginTop="4"
+                color="white"
+                mt={4}
                 onClick={uploadText}
                 loading={isTxtLoading}
+                loadingText="Generating..."
+                _hover={{ bg: "rgb(24, 140, 107)" }}
               >
-                Create
+                Generate
               </Button>
             </Flex>
+
+            {/* Блок с TXT файлом */}
             <Flex
-              h="42vh"
-              w="16vw"
-              bg="rgb(240, 240, 240)"
-              shadow="0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
-              borderRadius={16}
-              align="center"
+              w="300px"
+              bg="white"
+              shadow="md"
+              borderRadius="lg"
+              alignItems="center"
               flexDirection="column"
-              paddingTop="4"
+              p={6}
             >
               <Input
                 type="file"
@@ -378,45 +459,47 @@ const Home: React.FC = () => {
                 display="none"
               />
               <FileTxt />
+              <Text fontSize={18} fontWeight="500" color="rgb(40,40,40)" mt={4} mb={2}>
+                From TXT File
+              </Text>
               <Button
-                h="55%"
-                w="80%"
-                mt={4}
-                colorScheme="rgb(4, 120, 87)"
-                variant="outline"
-                _hover={{
-                  borderColor: "rgb(4, 120, 87)"
-                }}
+                w="100%"
+                h="100px"
                 onClick={handleTxtFileClick}
+                variant="outline"
+                borderColor="rgb(4,120,87)"
+                color="rgb(4,120,87)"
+                _hover={{ bg: "rgb(240,240,240)" }}
+                mb={2}
+                disabled={!user}
               >
-                <Text
-                  textAlign="center"
-                  color="rgb(114, 114, 114)"
-                  fontWeight={400}
-                >
-                  {!selectedTxtFile ? "Load your .txt file here" : selectedTxtFile.name}
+                <Text textAlign="center" fontSize={14}>
+                  {selectedTxtFile ? selectedTxtFile.name : "Choose TXT file"}
                 </Text>
               </Button>
               <Button
-                h="12%"
-                w="80%"
+                w="100%"
                 bg="rgb(4, 120, 87)"
-                marginTop="4"
+                color="white"
                 onClick={() => uploadTxtFile(selectedTxtFile)}
                 loading={isTxtLoading}
+                loadingText="Generating..."
+                disabled={!selectedTxtFile}
+                _hover={{ bg: "rgb(24, 140, 107)" }}
               >
-                Create
+                Generate
               </Button>
             </Flex>
+
+            {/* Блок с PDF файлом */}
             <Flex
-              h="42vh"
-              w="16vw"
-              bg="rgb(240, 240, 240)"
-              shadow="0 4px 20px -4px rgba(0, 0, 0, 0.1), 4px 0 10px -4px rgba(0, 0, 0, 0.03)"
-              borderRadius={16}
-              align="center"
+              w="300px"
+              bg="white"
+              shadow="md"
+              borderRadius="lg"
+              alignItems="center"
               flexDirection="column"
-              paddingTop="4"
+              p={6}
             >
               <Input
                 type="file"
@@ -426,38 +509,58 @@ const Home: React.FC = () => {
                 display="none"
               />
               <FilePdf />
+              <Text fontSize={18} fontWeight="500" color="rgb(40,40,40)" mt={4} mb={2}>
+                From PDF File
+              </Text>
               <Button
-                h="55%"
-                w="80%"
-                mt={4}
+                w="100%"
+                h="100px"
                 onClick={handlePdfFileClick}
-                colorScheme="rgb(4, 120, 87)"
                 variant="outline"
-                _hover={{
-                  borderColor: "rgb(4, 120, 87)"
-                }}
+                borderColor="rgb(4,120,87)"
+                color="rgb(4,120,87)"
+                _hover={{ bg: "rgb(240,240,240)" }}
+                mb={2}
+                disabled={!user}
               >
-                <Text
-                  textAlign="center"
-                  color="rgb(114, 114, 114)"
-                  fontWeight={400}
-                >
-                  {!selectedPdfFile ? "Load your .pdf file here" : selectedPdfFile.name}
+                <Text textAlign="center" fontSize={14}>
+                  {selectedPdfFile ? selectedPdfFile.name : "Choose PDF file"}
                 </Text>
               </Button>
               <Button
-                h="12%"
-                w="80%"
+                w="100%"
                 bg="rgb(4, 120, 87)"
-                marginTop="4"
+                color="white"
                 onClick={() => uploadPdfFile(selectedPdfFile)}
                 loading={isPdfLoading}
+                loadingText="Generating..."
+                disabled={!selectedPdfFile}
+                _hover={{ bg: "rgb(24, 140, 107)" }}
               >
-                Create
+                Generate
               </Button>
             </Flex>
           </HStack>
         </Flex>
+        
+        {isGuest && (
+          <Flex
+            mt={8}
+            p={4}
+            bg="blue.50"
+            borderRadius="lg"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Text color="blue.600" fontSize={14}>
+              You're in guest mode. Cards won't be saved. 
+              <Link onClick={() => navigate("/login")} color="blue.800" fontWeight="bold" ml={1}>
+                Login or Register
+              </Link>
+              {' '}to save your cards.
+            </Text>
+          </Flex>
+        )}
       </Flex>
     </Flex>
   );

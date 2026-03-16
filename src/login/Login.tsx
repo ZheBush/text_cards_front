@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Flex, Box, Text, Input, Link, Button } from "@chakra-ui/react";
 import { useAuth } from "../AuthContext.tsx";
-import { AuthResponse } from "../types/index.ts";
+import { AuthResponse } from "../types";
 
 interface LoginResponse {
   access_token: string;
@@ -13,10 +13,12 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [isEmailCorrect, setCorrectEmail] = useState<boolean>(true);
   const [password, setPassword] = useState<string>("");
-  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { login, createGuestSession } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (email: string, password: string): Promise<LoginResponse> => {
+  const handleLogin = async (email: string, password: string): Promise<void> => {
+    setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append("username", email);
@@ -24,7 +26,8 @@ const Login: React.FC = () => {
       
       const response = await fetch('/auth/login', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include' // Важно! Получаем refresh token в cookies
       });
       
       if (!response.ok) {
@@ -33,8 +36,12 @@ const Login: React.FC = () => {
       }
       
       const data: AuthResponse = await response.json();
+      
+      // Сохраняем access token в localStorage
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('token_type', data.token_type);
+      
+      // Обновляем контекст авторизации
       login({
         email,
         token: data.access_token,
@@ -44,12 +51,17 @@ const Login: React.FC = () => {
       });
       
       navigate("/home");
-      
-      return data;
     } catch (error) {
-      console.error(error);
-      throw error;
+      console.error('Login error:', error);
+      alert(error instanceof Error ? error.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleGuestLogin = () => {
+    createGuestSession();
+    navigate("/home");
   };
 
   const changeEmail = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -81,132 +93,89 @@ const Login: React.FC = () => {
       bg="rgb(240, 240, 240)"
     >
       <Flex
-        h="55%"
+        h="auto"
         w="30%"
-        p={4}
+        p={8}
         flexDirection="column"
+        bg="white"
+        borderRadius="lg"
+        shadow="lg"
       >
-        <Box
-          h="8vh"
-          display="flex"
-          justifyContent="center"
-        >
-          <Text
-            fontSize={24}
-            color="rgb(40, 40, 40)"
-            textAlign="center"
-          >
+        <Box display="flex" justifyContent="center" mb={6}>
+          <Text fontSize={28} color="rgb(40, 40, 40)" fontWeight="500">
             Welcome
           </Text>
         </Box>
         
-        <Flex
-          h="12vh"
-          justify="flex-start"
-          align="start"
-          flexDirection="column"
-        >
-          <Text
-            fontSize={12}
-            color={isEmailCorrect ? "rgb(4, 120, 87)" : "rgb(232, 52, 52)"}
-            textAlign="start"
-            p={2}
-          >
+        <Flex flexDirection="column" mb={4}>
+          <Text fontSize={12} color={isEmailCorrect ? "rgb(4, 120, 87)" : "rgb(232, 52, 52)"} mb={1}>
             {isEmailCorrect ? "Email" : "Incorrect email"}
           </Text>
           <Input
             type="email"
             value={email}
             onChange={changeEmail}
-            placeholder="Print your email"
-            size="sm"
+            placeholder="your@email.com"
+            size="md"
             borderColor={isEmailCorrect ? "rgb(220, 220, 220)" : "rgb(232, 52, 52)"}
-            shadow="4"
-            _autofill={{
-              bg: "white",
-              borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset",
-            }}
-            _focus={{
-              bg: "rgb(240, 240, 240)",
-              borderColor: isEmailCorrect ? "rgb(200, 200, 200)" : "rgb(232, 52, 52)"
-            }}
+            _focus={{ borderColor: "rgb(4, 120, 87)" }}
           />
         </Flex>
         
-        <Flex
-          h="10vh"
-          justify="flex-start"
-          align="start"
-          flexDirection="column"
-        >
-          <Flex
-            w="100%"
-            flexDirection="row"
-          >
-            <Text
-              fontSize={12}
-              color="rgb(4, 120, 87)"
-              textAlign="start"
-              p={2}
-            >
+        <Flex flexDirection="column" mb={6}>
+          <Flex justifyContent="space-between" alignItems="center" mb={1}>
+            <Text fontSize={12} color="rgb(4, 120, 87)">
               Password
             </Text>
-            <Link
-              fontSize={12}
-              color="rgb(4, 120, 87)"
-              p={2}
-              ml="auto"
-            >
-              I forgot password
+            <Link fontSize={12} color="rgb(4, 120, 87)" href="#">
+              Forgot password?
             </Link>
           </Flex>
           <Input
             type="password"
             value={password}
             onChange={changePassword}
-            placeholder="Print your password"
-            size="sm"
+            placeholder="••••••••"
+            size="md"
             borderColor="rgb(220, 220, 220)"
-            shadow="4"
-            _autofill={{
-              bg: "white",
-              borderColor: "rgb(220, 220, 220)",
-              boxShadow: "0 0 0px 1000px rgb(240, 240, 240) inset",
-            }}
-            _focus={{
-              bg: "rgb(240, 240, 240)",
-              borderColor: "rgb(200, 200, 200)"
-            }}
+            _focus={{ borderColor: "rgb(4, 120, 87)" }}
           />
         </Flex>
         
         <Button
           bg="rgb(4, 120, 87)"
-          _hover={{ bg: "rgb(24, 140, 107)" }}
-          marginTop={8}
+          color="white"
+          size="lg"
           onClick={submitData}
+          loading={isLoading}
+          loadingText="Logging in..."
+          _hover={{ bg: "rgb(24, 140, 107)" }}
+          mb={4}
         >
           Log in
         </Button>
-        
-        <Flex
-          w="100%"
-          flexDirection="row"
-          justify="center"
-          align="center"
-          marginTop={4}
+
+        <Button
+          variant="outline"
+          borderColor="rgb(4, 120, 87)"
+          color="rgb(4, 120, 87)"
+          size="lg"
+          onClick={handleGuestLogin}
+          _hover={{ bg: "rgb(240, 240, 240)" }}
+          mb={4}
         >
-          <Text
-            color="rgb(100, 100, 100)"
-            fontSize={12}
-          >
+          Continue as Guest
+        </Button>
+        
+        <Flex justifyContent="center" alignItems="center">
+          <Text color="rgb(100, 100, 100)" fontSize={14}>
             No Account?
           </Text>
           <Link
             color="rgb(4, 120, 87)"
-            fontSize={12}
-            marginStart={1}
+            fontSize={14}
+            fontWeight="500"
+            ml={1}
             href="/register"
           >
             Register

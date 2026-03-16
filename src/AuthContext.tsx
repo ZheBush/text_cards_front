@@ -4,7 +4,7 @@ import { User, UserRole } from './types';
 interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
   isGuest: boolean;
   createGuestSession: () => void;
@@ -50,13 +50,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('token_type');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_id');
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Отправляем запрос на сервер для удаления refresh token из cookies
+      await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Очищаем localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token_type');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_id');
+      setUser(null);
+    }
   };
 
   const createGuestSession = () => {
