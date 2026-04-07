@@ -27,7 +27,7 @@ const Login: React.FC = () => {
       const response = await fetch('/auth/login', {
         method: 'POST',
         body: formData,
-        credentials: 'include' // Важно! Получаем refresh token в cookies
+        credentials: 'include' 
       });
       
       if (!response.ok) {
@@ -36,12 +36,10 @@ const Login: React.FC = () => {
       }
       
       const data: AuthResponse = await response.json();
-      
-      // Сохраняем access token в localStorage
+
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('token_type', data.token_type);
-      
-      // Обновляем контекст авторизации
+
       login({
         email,
         token: data.access_token,

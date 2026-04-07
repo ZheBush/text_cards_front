@@ -1,4 +1,3 @@
-// api.ts
 const API_BASE = 'http://localhost:3001';
 
 interface AuthResponse {
@@ -17,38 +16,33 @@ export const authenticatedFetch = async (url: string, options: RequestInit = {})
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
   };
 
-  // Важно: не отправляем credentials автоматически для всех запросов
   const response = await fetch(fullUrl, { 
     ...options, 
     headers,
-    credentials: 'include' // Добавляем для отправки cookies
+    credentials: 'include' 
   });
 
   if (response.status === 401) {
     try {
-      // Пытаемся обновить токен
       const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
-        credentials: 'include', // Отправляем refresh token из cookies
+        credentials: 'include', 
       });
 
       if (refreshResponse.ok) {
         const data: AuthResponse = await refreshResponse.json();
-        
-        // Сохраняем только access token в localStorage
+
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('token_type', data.token_type);
         localStorage.setItem('user_role', data.role);
         localStorage.setItem('user_id', data.user_id);
 
-        // Повторяем оригинальный запрос с новым токеном
         const newHeaders = {
           ...options.headers,
           'Authorization': `Bearer ${data.access_token}`,
         };
         return fetch(fullUrl, { ...options, headers: newHeaders, credentials: 'include' });
       } else {
-        // Если refresh не удался, очищаем всё
         localStorage.removeItem('access_token');
         localStorage.removeItem('token_type');
         localStorage.removeItem('user_role');
@@ -72,17 +66,15 @@ export const authenticatedFetch = async (url: string, options: RequestInit = {})
   return response;
 };
 
-// Функция для выхода
 export const logout = async (): Promise<void> => {
   try {
     await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',
-      credentials: 'include', // Отправляем cookies для удаления refresh token
+      credentials: 'include', 
     });
   } catch (error) {
     console.error('Logout error:', error);
   } finally {
-    // Очищаем localStorage независимо от результата
     localStorage.removeItem('access_token');
     localStorage.removeItem('token_type');
     localStorage.removeItem('user_role');

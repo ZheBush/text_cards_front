@@ -72,8 +72,7 @@ const Groups: React.FC = () => {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  
-  // НЕ устанавливаем Content-Type для FormData
+
   const isFormData = options.body instanceof FormData;
   if (!isFormData && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');

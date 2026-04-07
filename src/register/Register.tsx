@@ -16,7 +16,7 @@ const Register: React.FC = () => {
   const [isEmailCorrect, setCorrectEmail] = useState<boolean>(true);
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [role, setRole] = useState<"USER" | "MANAGER">("USER");
+  const [role, setRole] = useState<"user" | "manager">("user");
   const [isPasswordConfirmed, setPasswordConfirmed] = useState<boolean>(true);
   const [isUserExists, setIsUserExists] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -24,7 +24,7 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const register = async (email: string, password: string, role: "USER" | "MANAGER"): Promise<RegisterResponse | null> => {
+  const register = async (email: string, password: string, role: "user" | "manager"): Promise<RegisterResponse | null> => {
     setIsLoading(true);
     setIsUserExists(false);
 
@@ -128,7 +128,7 @@ const Register: React.FC = () => {
   };
 
   const changeRole = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setRole(e.target.value as "USER" | "MANAGER");
+    setRole(e.target.value as "user" | "manager");
   };
 
   const submitData = async (e: FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>): Promise<void> => {
@@ -237,8 +237,8 @@ const Register: React.FC = () => {
               onChange={changeRole}
               borderColor="rgb(220, 220, 220)"
             >
-              <option value="USER">User</option>
-              <option value="MANAGER">Manager</option>
+              <option value="user">User</option>
+              <option value="manager">Manager</option>
             </NativeSelect.Field>
           </NativeSelect.Root>
         </Flex>
