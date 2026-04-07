@@ -8,6 +8,7 @@ import FileTxt from "../icons/FileTxt.tsx";
 import FilePdf from "../icons/FilePdf.tsx";
 import { LocationState } from "../types";
 import { useAuth } from "../AuthContext.tsx";
+import WeatherWidget from "../WeatherWidget.tsx";
 
 interface UploadResponse {
   card_list_id: string;
@@ -299,48 +300,58 @@ const Home: React.FC = () => {
         h="6vh"
         w="100%"
         justifyContent="center"
-        alignItems="center"
+        alignItems="start"
         bg="rgb(240, 240, 240)"
       >
-        <Flex h="100%" w="60%" alignItems="center">
-          <Link
-            fontSize={16}
-            color="rgb(4, 120, 87)"
-            p={2}
-            onClick={handleAuthClick}
-            cursor="pointer"
-            _hover={{ textDecoration: "underline" }}
-          >
-            {user ? (isGuest ? "Guest" : "Log out") : "Log in / Register"}
-          </Link>
-          
-          <Flex ml="auto" gap={4}>
-            {user && !isGuest && (
-              <Link
-                fontSize={16}
-                color="rgb(4, 120, 87)"
-                p={2}
-                href="/history"
-                _hover={{ textDecoration: "underline" }}
-              >
-                To history
-              </Link>
-            )}
-            {user && !isGuest && user.role === 'manager' && (
-              <Link
-                fontSize={16}
-                color="rgb(4, 120, 87)"
-                p={2}
-                href="/groups"
-                _hover={{ textDecoration: "underline" }}
-              >
-                Manage Groups
-              </Link>
-            )}
+        <Flex justifyContent="space-between" alignItems="start">
+          <WeatherWidget />
+        </Flex>
+        <Flex
+          h="6vh"
+          w="100%"
+          justifyContent="center"
+          alignItems="center"
+          bg="rgb(240, 240, 240)"
+        >
+          <Flex h="100%" w="60%" alignItems="center">
+            <Link
+              fontSize={16}
+              color="rgb(4, 120, 87)"
+              p={2}
+              onClick={handleAuthClick}
+              cursor="pointer"
+              _hover={{ textDecoration: "underline" }}
+            >
+              {user ? (isGuest ? "Guest" : "Log out") : "Log in / Register"}
+            </Link>
+            <Flex ml="auto" gap={4}>
+              {user && !isGuest && (
+                <Link
+                  fontSize={16}
+                  color="rgb(4, 120, 87)"
+                  p={2}
+                  href="/history"
+                  _hover={{ textDecoration: "underline" }}
+                >
+                  To history
+                </Link>
+              )}
+              {user && !isGuest && user.role === 'manager' && (
+                <Link
+                  fontSize={16}
+                  color="rgb(4, 120, 87)"
+                  p={2}
+                  href="/groups"
+                  _hover={{ textDecoration: "underline" }}
+                >
+                  Manage Groups
+                </Link>
+              )}
+            </Flex>
           </Flex>
         </Flex>
       </Flex>
-
+      
       <Flex
         flex="1"
         w="100%"
