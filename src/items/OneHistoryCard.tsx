@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { LocationState } from "../types";
+import { Link } from "react-router-dom";
 
 interface OneHistoryCardProps {
   id: string;
@@ -9,24 +8,17 @@ interface OneHistoryCardProps {
 }
 
 const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUploaded }) => {
-  const navigate = useNavigate();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleCardClick = () => {
-    navigate("/cards", {
-      state: { cardListId: id, title: title } as LocationState,
-    });
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
+    if (e.target.files?.[0]) setSelectedFile(e.target.files[0]);
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert("No file selected");
+      alert("Выберите файл");
       return;
     }
     setIsUploading(true);
@@ -40,16 +32,16 @@ const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUpload
         body: formData,
       });
       if (response.ok) {
-        alert("File uploaded successfully");
+        alert("Файл загружен");
         setSelectedFile(null);
         setIsUploadModalOpen(false);
-        if (onFileUploaded) onFileUploaded();
+        onFileUploaded?.();
       } else {
         const err = await response.json();
-        alert(`Upload failed: ${err.detail || "Unknown error"}`);
+        alert(`Ошибка: ${err.detail || "Неизвестная ошибка"}`);
       }
     } catch {
-      alert("Network error");
+      alert("Ошибка сети");
     } finally {
       setIsUploading(false);
     }
@@ -67,7 +59,6 @@ const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUpload
     justifyContent: "center",
     zIndex: 1000,
   };
-
   const modalContentStyles: React.CSSProperties = {
     backgroundColor: "white",
     padding: "24px",
@@ -77,56 +68,60 @@ const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUpload
   };
 
   return (
-    <>
-      <div
-        onClick={handleCardClick}
+    <article
+      style={{
+        height: "20vh",
+        width: "20vw",
+        backgroundColor: "rgb(240,240,240)",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 1px 4px -1px rgba(0,0,0,0.2)",
+        outline: "1px solid rgb(4,120,87)",
+        position: "relative",
+      }}
+    >
+      <Link
+        to={`/cards/${id}`}
         style={{
-          height: "20vh",
-          width: "20vw",
-          backgroundColor: "rgb(240,240,240)",
+          flex: 1,
           display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "flex-start",
-          flexDirection: "column",
-          boxShadow: "0 1px 4px -1px rgba(0,0,0,0.2)",
-          outline: "1px solid rgb(4,120,87)",
-          position: "relative",
+          justifyContent: "center",
+          alignItems: "center",
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        <h2 style={{ textAlign: "center", fontSize: 18, fontWeight: 400, padding: "8px", margin: 0 }}>
+          {title}
+        </h2>
+      </Link>
+      <button
+        style={{
+          position: "absolute",
+          bottom: "8px",
+          right: "8px",
+          backgroundColor: "rgb(4,120,87)",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          padding: "4px 8px",
+          fontSize: "12px",
           cursor: "pointer",
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgb(230,230,230)")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgb(240,240,240)")}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsUploadModalOpen(true);
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgb(24,140,107)")}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgb(4,120,87)")}
       >
-        <div style={{ textAlign: "center", color: "rgb(40,40,40)", fontWeight: 400, fontSize: 18, width: "100%", padding: "8px" }}>
-          {title}
-        </div>
-        <button
-          style={{
-            position: "absolute",
-            bottom: "8px",
-            right: "8px",
-            backgroundColor: "rgb(4,120,87)",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            padding: "4px 8px",
-            fontSize: "12px",
-            cursor: "pointer",
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsUploadModalOpen(true);
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgb(24,140,107)")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgb(4,120,87)")}
-        >
-          Upload file
-        </button>
-      </div>
+        Загрузить файл
+      </button>
 
       {isUploadModalOpen && (
         <div style={modalStyles} onClick={() => setIsUploadModalOpen(false)}>
           <div style={modalContentStyles} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginTop: 0 }}>Upload file for "{title}"</h3>
+            <h3 style={{ marginTop: 0 }}>Загрузка файла для "{title}"</h3>
             <input type="file" onChange={handleFileChange} style={{ margin: "16px 0", width: "100%" }} />
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
               <button
@@ -139,7 +134,7 @@ const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUpload
                   cursor: "pointer",
                 }}
               >
-                Cancel
+                Отмена
               </button>
               <button
                 onClick={handleUpload}
@@ -153,13 +148,13 @@ const OneHistoryCard: React.FC<OneHistoryCardProps> = ({ id, title, onFileUpload
                   cursor: "pointer",
                 }}
               >
-                {isUploading ? "Uploading..." : "Upload"}
+                {isUploading ? "Загрузка..." : "Загрузить"}
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </article>
   );
 };
 

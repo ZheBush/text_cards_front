@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from "react";
 import {
-  Flex, Box, Text, Link, Input, HStack, Button, Textarea
+  Flex, Box, Text, Link, Input, HStack, Button, Textarea,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Keyboard from "../icons/Keyboard.tsx";
 import FileTxt from "../icons/FileTxt.tsx";
 import FilePdf from "../icons/FilePdf.tsx";
 import { LocationState } from "../types";
 import { useAuth } from "../AuthContext.tsx";
 import WeatherWidget from "../WeatherWidget.tsx";
+import { Helmet } from 'react-helmet-async';
+
 
 interface UploadResponse {
   card_list_id: string;
@@ -289,13 +291,50 @@ const Home: React.FC = () => {
     }
   };
 
+  const location = useLocation();
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
+
   return (
+
     <Flex
       minH="100vh"
       w="100%"
       bg="rgb(240, 240, 240)"
       flexDirection="column"
     >
+
+      <Helmet>
+        <title>Генератор карточек</title>
+        <link rel="canonical" href={canonicalUrl} />
+        <meta 
+          name="description" 
+          content="Сервис для создания учебных карточек из текста, TXT или PDF. Генерируй карточки быстро и бесплатно." />
+        <meta 
+          property="og:title" 
+          content="Генератор карточек – учись с удовольствием" />
+        <meta 
+          property="og:description" 
+          content="Создавайте карточки для запоминания из текста, TXT или PDF. Бесплатно, без регистрации (гостевой режим)." />
+        <meta 
+          property="og:image" 
+          content="https://fleshcards.com/og-home.png" />
+        <meta 
+          property="og:url" 
+          content="https://fleshcards.com/" />
+        <meta 
+          name="twitter:card" 
+          content="summary_large_image" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Cards Generator",
+            "description": "Создание карточек в формате 'вопрос-ответ'",
+            "url": "https://yourdomain.com",
+          })}
+        </script>
+      </Helmet>
+
       <Flex
         h="6vh"
         w="100%"
@@ -372,6 +411,7 @@ const Home: React.FC = () => {
           flexDirection="column"
           mb={8}
         >
+          
           <Text fontSize={24} color="rgb(40, 40, 40)" mb={6} fontWeight="500">
             Create New Cards
           </Text>

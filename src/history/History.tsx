@@ -3,10 +3,11 @@ import {
   Flex, Button, Text, Link, Grid, GridItem, HStack, Spinner,
   Input, Select, Box
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CardList from "../classes/CardList.ts";
 import OneHistoryCard from "../items/OneHistoryCard.tsx";
 import { useQueryParams } from "../hooks/useQueryParams.ts";
+import { Helmet } from "react-helmet-async";
 
 interface CardListData {
   id: string;
@@ -178,8 +179,15 @@ const History: React.FC = () => {
     );
   };
 
+  const location = useLocation();
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
+
   return (
     <Flex minH="100vh" w="100%" bg="rgb(240, 240, 240)" flexDirection="column">
+
+      <Helmet>
+        <link rel="canonical" href={canonicalUrl} />
+      </Helmet>
       {/* Верхняя панель */}
       <Flex h="6vh" w="100%" justifyContent="center" alignItems="center">
         <Flex h="100%" w="60%">

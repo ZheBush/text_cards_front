@@ -23,7 +23,7 @@ const WeatherWidget: React.FC = () => {
   }, []);
 
   if (loading) return <Spinner size="sm" />;
-  if (error) return <Text fontSize="sm">⚠️ Погода недоступна</Text>;
+  if (error) return <Text fontSize="sm">Погода недоступна</Text>;
   if (!weather) return null;
 
   const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`;
